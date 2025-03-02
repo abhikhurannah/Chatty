@@ -66,7 +66,7 @@ const SignUpPage = () => {
             className="text-white text-4xl font-semibold flex items-center space-x-3 mb-8"
           >
             <FaUserPlus className="text-blue-400" />
-            <span>Sign Up</span>
+            <span>Create Your Account</span>
           </motion.div>
           
           <Card className="w-full max-w-md bg-gray-800 bg-opacity-90 backdrop-blur-lg shadow-2xl rounded-xl overflow-hidden border border-gray-700">
