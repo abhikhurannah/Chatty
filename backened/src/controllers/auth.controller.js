@@ -24,7 +24,14 @@ export const signup = async (req,res)=>{
 
     if(newUser){
        //generate jwt token
-       generateToken(newUser._id,res);
+            try {
+                generateToken(newUser._id, res);
+            } catch (tokenError) {
+                console.error("Token generation failed:", tokenError.message);
+                return res.status(500).json({ message: "Error generating authentication token" });
+            }
+    
+       
        await newUser.save();
 
        res.status(201).json({
@@ -70,39 +77,53 @@ export const login = async(req,res)=>{
         res.status(500).json({message: "server error"})
     }
 }
-export const logout =(req,res)=>{ 
-    try{
-      res.cookie("jwt","",{maxAge:0});
-      res.status(500).json({message: "Logged out successfully"})
-    }catch(e){
-        console.log("error in logout controller",e.message);
-        res.status(500).json({message: "server error"})
-    }
-}
-export const updateProfile = async (req,res)=>{
+export const logout = (req, res) => { 
     try {
-        const {profilePic} = req.body;
+        res.cookie("jwt", "", { maxAge: 0 });
+        res.status(200).json({ message: "Logged out successfully" }); // Fixed status code
+    } catch (e) {
+        console.log("error in logout controller", e.message);
+        res.status(500).json({ message: "server error" });
+    }
+};
+
+export const updateProfile = async (req, res) => {
+    try {
+        const { profilePic } = req.body;
         const userId = req.user._id;
 
-        if(!profilePic){
-            return res.status(400).json({message: "profilePic is required"})
+        if (!profilePic) {
+            return res.status(400).json({ message: "profilePic is required" });
         }
-        const uploadresponse = await cloudinary.uploader.upload(profilePic)
-        const updatedUser = await User.findByIdAndUpdate(userId, {profilePic: uploadresponse.url}, {new: true});
-        res.status(200).json(updatedUser)
-        
+
+        const uploadresponse = await cloudinary.uploader.upload(profilePic);
+        const updatedUser = await User.findByIdAndUpdate(
+            userId, 
+            { profilePic: uploadresponse.url }, 
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: "User not found" }); // Added check
+        }
+
+        res.status(200).json(updatedUser);
     } catch (error) {
         console.log("error in updateProfile controller", error.message);
-        res.status(500).json({message: "server error"}) 
-        
+        res.status(500).json({ message: "server error" });
     }
-}
-export const checkAuth = async (req,res)=>{
+};
+
+
+
+export const checkAuth = async (req, res) => {
     try {
-        res.status(200).json(req.user)
+        if (!req.user) {
+            return res.status(401).json({ message: "Unauthorized" }); // Added check
+        }
+        res.status(200).json(req.user);
     } catch (error) {
         console.log("error in checkAuth controller", error.message);
-        res.status(500).json({message: "server error"}) 
-        
+        res.status(500).json({ message: "server error" });
     }
-}
+};
