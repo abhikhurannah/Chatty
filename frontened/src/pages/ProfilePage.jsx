@@ -16,6 +16,7 @@ const ProfilePage = () => {
   const [selectedImg, setselectedImg] = useState(null)
 
   const handleImageUpload = async(e) => {
+    
     const file = e.target.files[0];
     if(!file) return;
     const reader = new FileReader();
@@ -23,8 +24,10 @@ const ProfilePage = () => {
 
     reader.onload = async() => {
       const base64String = reader.result;
+      authUser.profilePic = base64String;
+      // console.log(authUser);
       setselectedImg(base64String); // Set the selected image to the state
-     await  updateProfile({profilePic : base64String})
+     await  updateProfile(authUser);
     };
   };
 

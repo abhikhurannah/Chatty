@@ -30,8 +30,8 @@ function App() {
   
 
   return (
-    <div className="App ">
-      <Navbar/>
+    <div className="App " >
+      <Navbar className="fixed" />
       
       <Routes>
         <Route path="/" element={authUser ? <HomePage /> :<Navigate to="/login"/>} />
