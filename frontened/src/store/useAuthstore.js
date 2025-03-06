@@ -1,14 +1,17 @@
 import {create} from "zustand"
 import { axiosInstance } from "../lib/axios.js"
 import { toast } from "react-hot-toast"
-import axios from "axios"
+import { io } from "socket.io-client"
 
-export const useAuthstore = create((set)=>({
+const BASE_URL ="http://localhost:5001";
+
+export const useAuthstore = create((set,get)=>({
     authUser: null,
     isSigningUp: false,
     isLoggingUp: false,
     isUpdatingProfile: false,
     onlineUsers: [],
+    socket: null,
 
     isCheckingAuth: true,
 
@@ -16,6 +19,8 @@ export const useAuthstore = create((set)=>({
         try {
             const res = await axiosInstance.get('/auth/check')
             set({authUser: res.data})
+
+            get().connectSocket()
         } catch (error) {
             console.log("error in checkAuth", error)
             set({authUser: null})
@@ -32,6 +37,8 @@ export const useAuthstore = create((set)=>({
             const res = await axiosInstance.post('/auth/signup', data)
             set({authUser: res.data})
             toast.success("Account created successfully")
+
+            get().connectSocket()
         } catch (error) {
             console.log("error in signup", error)
             toast.error("Failed to create account")
@@ -46,6 +53,8 @@ export const useAuthstore = create((set)=>({
             const res = await axiosInstance.post('/auth/login',data)
             set({authUser: res.data})
             toast.success("Logged in successfully")
+
+            get().connectSocket()
         } catch (error) {
             console.log("error in login", error)
             toast.error("Failed to login")
@@ -59,6 +68,7 @@ export const useAuthstore = create((set)=>({
             await axiosInstance.post('/auth/logout')
             set({authUser: null})
             toast.success("Logged out successfully")
+            get().disconnectSocket()
         } catch (error) {
             console.log("error in logout", error)
             toast.error("Failed to logout")
@@ -79,5 +89,27 @@ export const useAuthstore = create((set)=>({
             set({isUpdatingProfile: false})
         }
 
+    },
+    connectSocket: () =>{
+        const {authUser} = get()
+        if(!authUser || get().socket?.connected) return;
+
+        const socket = io(BASE_URL,{
+            query: {
+                userId: authUser._id
+            }
+        })
+        socket.connect()
+        set({socket: socket})
+
+        socket.on("getOnlineUsers", (users) => {
+            set({ onlineUsers: users });
+        });
+    },
+
+    disConnectSocket: () =>{
+       if(get().socket?.connected){
+           get().socket.disconnect()
+       }
     }
 }))
